@@ -10,6 +10,8 @@ class UpdateLaborDetailsList extends StatelessWidget {
   Map<String, dynamic> dateReportMap = {};
   Map<String, dynamic> dataFromDB = {};
   List<DailyReportFormModel> lstrprtModel=[];
+  Map<String,dynamic> teamDataFromDB= {};
+  Map<String,dynamic> transformedTeamDataFromDB={};
 
   Future<_DailyReportResponse> _dailyReportData;
 
@@ -17,8 +19,26 @@ class UpdateLaborDetailsList extends StatelessWidget {
     final _dailyReportResponse = await http.get(
         'https://operationsreporting-584ec.firebaseio.com/dailyreports.json');
 
-    if (_dailyReportResponse.statusCode == 200) {
+    final _dailyReportResponse2 = await http.get(
+        'https://operationsreporting-584ec.firebaseio.com/TeamDetails.json');
+
+    if (_dailyReportResponse.statusCode == 200 && _dailyReportResponse2.statusCode==200) {
       // If the call to the server was successful, parse the JSON
+      teamDataFromDB=json.decode(_dailyReportResponse2.body);
+      teamDataFromDB.forEach((fbid,teamDataMap){
+        Map<String,String> tempMap ={
+        "baseSalary":teamDataMap['baseSalary'],
+        "foodAllowance":teamDataMap['foodAllowance'],
+        "mesthriAllowance":teamDataMap['mesthriAllowance'],
+        "otAllowance": teamDataMap['otAllowance'],
+        "sprayAllowance": teamDataMap['sprayAllowance'],
+        "teamName": teamDataMap['teamName'],
+         "fbid": fbid
+
+        };
+        transformedTeamDataFromDB[teamDataMap['teamName']] = tempMap;
+
+      });
 
       print(json.decode(_dailyReportResponse.body));
       responseMap = json.decode(_dailyReportResponse.body);
@@ -80,7 +100,7 @@ class UpdateLaborDetailsList extends StatelessWidget {
                 });
                     lstrprtModel = lstrprtModel.reversed.toList();
                     return ListView.builder(itemBuilder: (context,index){
-                      return DailyReportFormFieldsCard(lstrprtModel[index]);
+                      return DailyReportFormFieldsCard(lstrprtModel[index],transformedTeamDataFromDB[lstrprtModel[index].teamName]);
 
                     },itemCount: lstrprtModel.length,);
               } else if (snapshot.hasError) {
@@ -98,6 +118,7 @@ class UpdateLaborDetailsList extends StatelessWidget {
 
 class _DailyReportResponse {
   final Map<String, dynamic> dailyDataMap;
+
 
   _DailyReportResponse(this.dailyDataMap);
 }

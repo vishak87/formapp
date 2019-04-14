@@ -1,11 +1,13 @@
 import '../model/dailyreportformfields.dart';
 import 'package:flutter/material.dart';
-
+import 'package:form_app/editdailyreportform.dart';
+import 'package:http/http.dart' as http;
 class DailyReportFormFieldsCard extends StatelessWidget{
 
   DailyReportFormModel drprtfrmModel;
+  Map<String,dynamic> teamDataFromDB;
 
-  DailyReportFormFieldsCard(this.drprtfrmModel);
+  DailyReportFormFieldsCard(this.drprtfrmModel,this.teamDataFromDB);
 
 
   @override
@@ -21,10 +23,10 @@ class DailyReportFormFieldsCard extends StatelessWidget{
                 Row(children: <Widget>[
                   Container(
                     child: IconButton(icon: Icon(Icons.edit), onPressed: (){
-                      /*Navigator.push(
+                      Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => UpdateProjectDetails(projectData)),
-                        );*/
+                        MaterialPageRoute(builder: (context) => EditDailyReportForm(drprtfrmModel,teamDataFromDB)),
+                        );
                     }),
 
                     ),
@@ -32,11 +34,31 @@ class DailyReportFormFieldsCard extends StatelessWidget{
                     width: 250.00,
                   ),
                   Container(
-                    child: IconButton(icon: Icon(Icons.delete), onPressed: (){
-                      /*Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => UpdateProjectDetails(projectData)),
-                        );*/
+                    child: IconButton(icon: Icon(Icons.delete), onPressed: ()async{
+                      String str = drprtfrmModel.date.substring(0,drprtfrmModel.date.indexOf(' '));
+                      String url = 'https://operationsreporting-584ec.firebaseio.com/dailyreports/'+str+'/'+drprtfrmModel.fbid+'.json';
+                      print(url);
+                      final _deleteResponse =
+                      await http.delete(url);
+                      if(_deleteResponse.statusCode==200){
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Status'),
+                                content: Text('Data Deleted'),
+                                actions: <Widget>[
+                                  FlatButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Text('Ok'),
+                                    )
+                                ],
+                                );
+                            });
+                      }
+
                     }),
 
                     )

@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'model/dailyreportformfields.dart';
 
-class HomePageForm extends StatefulWidget {
-  final List<String> teamName;
-  final List<String> projectName;
-  final Map<String, dynamic> teamDataFromDB;
+class EditDailyReportForm extends StatefulWidget {
 
-  HomePageForm(this.teamName, this.projectName, this.teamDataFromDB);
+  final DailyReportFormModel drprtFrmModel;
+  final Map<String,dynamic> teamDataFromDB;
+  EditDailyReportForm(this.drprtFrmModel,this.teamDataFromDB);
 
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
-    return _HomePageState(teamName, projectName, teamDataFromDB);
+    return _EditDailyReportFormState(drprtFrmModel,teamDataFromDB);
   }
+
 }
 
-class _HomePageState extends State<HomePageForm> {
-  Map<String, Map<String, String>> teamDataFromDB;
-  List<String> teamName;
-  List<String> projectName;
+
+class _EditDailyReportFormState extends State<EditDailyReportForm>{
+
+
+  final DailyReportFormModel drprtFrmModel;
+  final Map<String,dynamic> teamDataFromDB;
+
+  _EditDailyReportFormState(this.drprtFrmModel,this.teamDataFromDB);
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  String teamNameDropdownValue;
-  String projectNameDropdownValue;
-  DateTime date;
   List<Widget> listFormFields = [];
   int listRowCount = 0;
 
@@ -62,112 +63,14 @@ class _HomePageState extends State<HomePageForm> {
     'sprayLabour': '',
   };
 
-  final formats = {
-    InputType.date: DateFormat('dd-MM-yyyy'),
-  };
-
-  _HomePageState(this.teamName, this.projectName, this.teamDataFromDB);
 
   String dateValue = '';
 
-  _buildTeamNameDropDown(List<String> teamName) {
-    List<DropdownMenuItem<String>> teamNameMenu = [];
 
-    teamName.forEach((String val) {
-      teamNameMenu.add(new DropdownMenuItem(
-        child: Text(val),
-        value: val,
-        ));
-    });
-
-    return DropdownButtonFormField(
-      items: teamNameMenu,
-      value: teamNameDropdownValue,
-      validator: (val){
-        if(val.toString().isEmpty){
-          return 'Should not be empty';
-        }
-      },
-      hint: Text('Team Name'),
-      onChanged: (value) {
-        setState(() {
-          print('The value selected is ' + value);
-          teamNameDropdownValue = value;
-          teamName = teamName;
-          projectName = projectName;
-          projectNameDropdownValue = projectNameDropdownValue;
-          date = date;
-          _formdata['teamName'] = value;
-          _formdata = _formdata;
-        });
-      },
-      );
-  }
-
-  _buildProjectNameDropDown(List<String> projectName) {
-    List<DropdownMenuItem<String>> projectNameMenu = [];
-
-    projectName.forEach((String val) {
-      projectNameMenu.add(new DropdownMenuItem(
-        child: Text(val),
-        value: val,
-        ));
-    });
-
-    return DropdownButtonFormField(
-      decoration: InputDecoration(),
-      items: projectNameMenu,
-      value: projectNameDropdownValue,
-      hint: Text('Project Name'),
-      validator: (val){
-        if(val.toString().isEmpty){
-          return 'Should not be empty';
-        }
-      },
-      onChanged: (value) {
-        setState(() {
-          print('The value selected is ' + value);
-          teamNameDropdownValue = teamNameDropdownValue;
-          teamName = teamName;
-          projectName = projectName;
-          projectNameDropdownValue = value;
-          date = date;
-          _formdata['projectName'] = value;
-          _formdata = _formdata;
-        });
-      },
-      );
-  }
-
-  _buildDateField() {
-    InputType inputType = InputType.date;
-    return DateTimePickerFormField(
-      decoration:
-      InputDecoration(labelText: 'Date', hasFloatingPlaceholder: false),
-      dateOnly: true,
-      inputType: inputType,
-      format: formats[inputType],
-      editable: false,
-       validator:(val){
-          if(val.toString().isEmpty){
-            return 'Should not be empty';
-          }
-        },
-      onChanged: (dt) => setState(() {
-        date = dt;
-        teamNameDropdownValue = teamNameDropdownValue;
-        teamName = teamName;
-        projectName = projectName;
-        projectNameDropdownValue = projectNameDropdownValue;
-        _formdata['date'] = dt.toString();
-        _formdata = _formdata;
-      }),
-      );
-  }
 
   Widget _buildAdvanceField() {
     return TextFormField(
-      initialValue: '0',
+      initialValue: drprtFrmModel.advanceAmount,
       decoration: InputDecoration(
           labelText: 'Advance Amount', filled: true, fillColor: Colors.white),
       obscureText: false,
@@ -185,7 +88,7 @@ class _HomePageState extends State<HomePageForm> {
 
   Widget _buildOtherAllowance() {
     return TextFormField(
-      initialValue: '0',
+      initialValue: drprtFrmModel.otherAllowance,
       decoration: InputDecoration(
           labelText: 'Other Allowance in Rs.',
           filled: true,
@@ -205,6 +108,7 @@ class _HomePageState extends State<HomePageForm> {
 
   Widget _buildOtherAllowanceDesc() {
     return TextFormField(
+      initialValue: drprtFrmModel.otherAllowanceReason,
       decoration: InputDecoration(
           labelText: 'Reason for allowance.',
           filled: true,
@@ -218,11 +122,34 @@ class _HomePageState extends State<HomePageForm> {
   }
 
   Widget _buildLabourShitRow(String workerKey, String shiftKey) {
+
+    String initVal ='0';
+    String shiftInitVal='0';
+    if(workerKey=='labourRow1'){
+      initVal=drprtFrmModel.labourRow1;
+    }
+    else if(workerKey=='labourRow2'){
+      initVal=drprtFrmModel.labourRow2;
+    }
+    else if(workerKey=='labourRow3'){
+      initVal=drprtFrmModel.labourRow3;
+    }
+
+    if(shiftKey=='labourShiftRow1'){
+      shiftInitVal=drprtFrmModel.labourShiftRow1;
+    }
+    else if(shiftKey=='labourShiftRow2'){
+      shiftInitVal=drprtFrmModel.labourShiftRow2;
+    }
+    else if(shiftKey=='labourShuftRow3'){
+      shiftInitVal=drprtFrmModel.labourShiftRow3;
+    }
+
     return Row(
       children: <Widget>[
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: initVal,
             decoration: InputDecoration(
                 labelText: 'No. Of Workers',
                 filled: true,
@@ -243,7 +170,7 @@ class _HomePageState extends State<HomePageForm> {
           ),
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: shiftInitVal,
             decoration: InputDecoration(
                 labelText: 'Shift', filled: true, fillColor: Colors.white),
             obscureText: false,
@@ -266,7 +193,7 @@ class _HomePageState extends State<HomePageForm> {
 
   Widget _buildMesthriAllowance() {
     return TextFormField(
-      initialValue: '0',
+      initialValue: drprtFrmModel.mesthriShift,
       decoration: InputDecoration(
           labelText: 'Mesthri Shift', filled: true, fillColor: Colors.white),
       obscureText: false,
@@ -286,7 +213,7 @@ class _HomePageState extends State<HomePageForm> {
 
   Widget _buildSparyAllowance() {
     return TextFormField(
-      initialValue: '0',
+      initialValue: drprtFrmModel.sprayLabour,
       decoration: InputDecoration(
           labelText: 'No.Of Spray Labours',
           filled: true,
@@ -305,11 +232,36 @@ class _HomePageState extends State<HomePageForm> {
   }
 
   Widget _buildOTRow(String workerKey, String shiftKey) {
+
+    String initVal ='0';
+    String shiftInitVal='0';
+    if(workerKey=='workerOTRow1'){
+      initVal=drprtFrmModel.workerOTRow1;
+    }
+    else if(workerKey=='workerOTRow2'){
+      initVal=drprtFrmModel.workerOTRow2;
+    }
+    else if(workerKey=='workerOTRow3'){
+      initVal=drprtFrmModel.workerOTRow3;
+    }
+
+    if(shiftKey=='shiftOTRow1'){
+      shiftInitVal=drprtFrmModel.shiftOTRow1;
+    }
+    else if(shiftKey=='shiftOTRow3'){
+      shiftInitVal=drprtFrmModel.shiftOTRow2;
+    }
+    else if(shiftKey=='shiftOTRow3'){
+      shiftInitVal=drprtFrmModel.shiftOTRow3;
+    }
+
+
+
     return Row(
       children: <Widget>[
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: initVal,
             decoration: InputDecoration(
                 labelText: 'No. Of Workers',
                 filled: true,
@@ -328,7 +280,7 @@ class _HomePageState extends State<HomePageForm> {
           ),
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: shiftInitVal,
             decoration: InputDecoration(
                 labelText: 'OT in hrs', filled: true, fillColor: Colors.white),
             obscureText: false,
@@ -348,11 +300,35 @@ class _HomePageState extends State<HomePageForm> {
   }
 
   Widget _buildLabourFoodRow(String workerKey, String amount) {
+
+    String initVal ='0';
+    String shiftInitVal='0';
+    if(workerKey=='workerFoodRow1'){
+      initVal=drprtFrmModel.workerFoodRow1;
+    }
+    else if(workerKey=='workerFoodRow2'){
+      initVal=drprtFrmModel.workerFoodRow2;
+    }
+    else if(workerKey=='workerFoodRow3'){
+      initVal=drprtFrmModel.workerFoodRow3;
+    }
+
+    if(amount=='foodAmountRow1'){
+      shiftInitVal=drprtFrmModel.foodAmountRow1;
+    }
+    else if(amount=='foodAmountRow2'){
+      shiftInitVal=drprtFrmModel.foodAmountRow2;
+    }
+    else if(amount=='foodAmountRow3'){
+      shiftInitVal=drprtFrmModel.foodAmountRow3;
+    }
+
+
     return Row(
       children: <Widget>[
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: initVal,
             decoration: InputDecoration(
                 labelText: 'No. Of Workers',
                 filled: true,
@@ -371,7 +347,7 @@ class _HomePageState extends State<HomePageForm> {
           ),
         Flexible(
           child: TextFormField(
-            initialValue: '0',
+            initialValue: shiftInitVal,
             decoration: InputDecoration(
                 labelText: 'Food allownace in Rs.',
                 filled: true,
@@ -522,7 +498,7 @@ class _HomePageState extends State<HomePageForm> {
 
   calculatePendingSalary() {
     print(teamDataFromDB);
-    Map<String, String> teamdetails = teamDataFromDB[teamNameDropdownValue];
+    Map<String, String> teamdetails = teamDataFromDB;
     print(teamdetails);
     String mesthriSalary = teamdetails['mesthriAllowance'];
     String baseSalary = teamdetails['baseSalary'];
@@ -601,134 +577,183 @@ class _HomePageState extends State<HomePageForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Daily labour Report'),),
+      appBar: AppBar(
+        title: Text(
+            'Daily labour Report'),),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              _buildTeamNameDropDown(teamName),
+              Text('Team Name : '+drprtFrmModel.teamName, style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildProjectNameDropDown(projectName),
+              Text('Project Name : '+drprtFrmModel.projectName, style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildDateField(),
+              Text('Date : '+drprtFrmModel.date.substring(0,drprtFrmModel.date.indexOf(' ')), style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),),
               SizedBox(
                 height: 20.0,
                 ),
               Center(
-                child: Text('Please Enter Labour Details'),
+                child: Text(
+                    'Please Enter Labour Details'),
                 ),
               SizedBox(
                 height: 20.0,
                 ),
-              _buildLabourShitRow('labourRow1', 'labourShiftRow1'),
+              _buildLabourShitRow(
+                  'labourRow1', 'labourShiftRow1'),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildLabourShitRow('labourRow2', 'labourShiftRow2'),
+              _buildLabourShitRow(
+                  'labourRow2', 'labourShiftRow2'),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildLabourShitRow('labourRow3', 'labourShiftRow3'),
+              _buildLabourShitRow(
+                  'labourRow3', 'labourShiftRow3'),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildMesthriAllowance(),
+              _buildMesthriAllowance(
+              ),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildSparyAllowance(),
+              _buildSparyAllowance(
+              ),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildAdvanceField(),
-              SizedBox(
-                height: 20.0,
-                ),
-              Center(
-                child: Text('Enter Allowance Details'),
-                ),
-              SizedBox(
-                height: 20.0,
-                ),
-              _buildLabourFoodRow('workerFoodRow1', 'foodAmountRow1'),
-              SizedBox(
-                height: 4.0,
-                ),
-              _buildLabourFoodRow('workerFoodRow2', 'foodAmountRow2'),
-              SizedBox(
-                height: 4.0,
-                ),
-              _buildLabourFoodRow('workerFoodRow3', 'foodAmountRow3'),
-              SizedBox(
-                height: 4.0,
-                ),
-              _buildOtherAllowance(),
-              SizedBox(
-                height: 4.0,
-                ),
-              _buildOtherAllowanceDesc(),
+              _buildAdvanceField(
+              ),
               SizedBox(
                 height: 20.0,
                 ),
               Center(
-                child: Text('Enter OT Details'),
+                child: Text(
+                    'Enter Allowance Details'),
                 ),
-              _buildOTRow('workerOTRow1', 'shiftOTRow1'),
+              SizedBox(
+                height: 20.0,
+                ),
+              _buildLabourFoodRow(
+                  'workerFoodRow1', 'foodAmountRow1'),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildOTRow('workerOTRow2', 'shiftOTRow2'),
+              _buildLabourFoodRow(
+                  'workerFoodRow2', 'foodAmountRow2'),
               SizedBox(
                 height: 4.0,
                 ),
-              _buildOTRow('workerOTRow3', 'shiftOTRow3'),
+              _buildLabourFoodRow(
+                  'workerFoodRow3', 'foodAmountRow3'),
+              SizedBox(
+                height: 4.0,
+                ),
+              _buildOtherAllowance(
+              ),
+              SizedBox(
+                height: 4.0,
+                ),
+              _buildOtherAllowanceDesc(
+              ),
+              SizedBox(
+                height: 20.0,
+                ),
+              Center(
+                child: Text(
+                    'Enter OT Details'),
+                ),
+              _buildOTRow(
+                  'workerOTRow1', 'shiftOTRow1'),
+              SizedBox(
+                height: 4.0,
+                ),
+              _buildOTRow(
+                  'workerOTRow2', 'shiftOTRow2'),
+              SizedBox(
+                height: 4.0,
+                ),
+              _buildOTRow(
+                  'workerOTRow3', 'shiftOTRow3'),
               SizedBox(
                 height: 20.0,
                 ),
               RaisedButton(
-                onPressed: () async {
-                  if (_formKey.currentState.validate()) {
-
+                onPressed: (
+                    ) async {
+                  _formdata['date']=drprtFrmModel.date;
+                  _formdata['projectName']=drprtFrmModel.projectName;
+                  _formdata['teamName']=drprtFrmModel.teamName;
+                  if (_formKey.currentState.validate(
+                  )) {
                     String msg = 'The details have been submitted!';
-                    _formKey.currentState.save();
-                    calculatePendingSalary();
-                    constructFoodDetailsText();
-                    constructLabourDetailsText();
-                    constructOTDetailsText();
-                    print(_formdata);
-                    String dateStr = _formdata['date'].toString();
-                    print('The date string is :' + dateStr);
-                    dateStr = dateStr.substring(0, dateStr.indexOf(' '));
-                    dateStr = dateStr.trim();
-                    print('The date string is :' + dateStr);
-                    String _projectName = _formdata['projectName'].toString();
-                    _projectName = _projectName.replaceAll(' ', '');
-                    http.Response response = await http.post(
+                    _formKey.currentState.save(
+                    );
+                    calculatePendingSalary(
+                    );
+                    constructFoodDetailsText(
+                    );
+                    constructLabourDetailsText(
+                    );
+                    constructOTDetailsText(
+                    );
+                    print(
+                        _formdata);
+                    String dateStr = _formdata['date'].toString(
+                    );
+                    print(
+                        'The date string is :' + dateStr);
+                    dateStr = dateStr.substring(
+                        0, dateStr.indexOf(
+                        ' '));
+                    dateStr = dateStr.trim(
+                    );
+                    print(
+                        'The date string is :' + dateStr);
+                    String _projectName = _formdata['projectName'].toString(
+                    );
+                    _projectName = _projectName.replaceAll(
+                        ' ', '');
+
+
+                    http.Response response = await http.patch(
                         'https://operationsreporting-584ec.firebaseio.com/dailyreports/' +
-                            dateStr +
-                            '.json',
-                        body: json.encode(_formdata),
+                            dateStr +'/'+drprtFrmModel.fbid+'.json'
+                        ,
+                        body: json.encode(
+                            _formdata),
                         headers: {'Content-Type': 'application/json'});
 
                     if (response.statusCode == 200) {
                       showDialog(
                           context: context,
-                          builder: (BuildContext context) {
+                          builder: (
+                              BuildContext context
+                              ) {
                             return AlertDialog(
-                              title: Text('Success'),
-                              content: Text('The details have been submitted!'),
+                              title: Text(
+                                  'Success'),
+                              content: Text(
+                                  'The details have been submitted!'),
                               actions: <Widget>[
                                 FlatButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    _formKey.currentState.reset();
+                                  onPressed: (
+                                      ) {
+                                    Navigator.of(
+                                        context).pop(
+                                    );
+                                    _formKey.currentState.reset(
+                                    );
                                   },
-                                  child: Text('Ok'),
+                                  child: Text(
+                                      'Ok'),
                                   )
                               ],
                               );
@@ -736,18 +761,28 @@ class _HomePageState extends State<HomePageForm> {
                     } else {
                       showDialog(
                           context: context,
-                          builder: (BuildContext context) {
+                          builder: (
+                              BuildContext context
+                              ) {
                             return AlertDialog(
-                              title: Text('Status'),
-                              content: Text('Submission Failed' +
-                                                response.statusCode.toString()),
+                              title: Text(
+                                  'Status'),
+                              content: Text(
+                                  'Submission Failed' +
+                                      response.statusCode.toString(
+                                      )),
                               actions: <Widget>[
                                 FlatButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    _formKey.currentState.reset();
+                                  onPressed: (
+                                      ) {
+                                    Navigator.of(
+                                        context).pop(
+                                    );
+                                    _formKey.currentState.reset(
+                                    );
                                   },
-                                  child: Text('Ok'),
+                                  child: Text(
+                                      'Ok'),
                                   )
                               ],
                               );
@@ -755,7 +790,8 @@ class _HomePageState extends State<HomePageForm> {
                     }
                   }
                 },
-                child: Text('Submit'),
+                child: Text(
+                    'Submit'),
                 )
             ],
             ),
@@ -763,23 +799,5 @@ class _HomePageState extends State<HomePageForm> {
         ),
       );
   }
+
 }
-
-/*
-* http.Response putResponse = http.post(
-                            'https://operationsreporting-584ec.firebaseio.com/' +
-                                _formdata['date'].toString() +
-                                '/' +
-                                _formdata['teamName'] +
-                                '-' +
-                                _projectName+
-                                '.json',
-                            body: json.encode(_formdata),
-                            headers: {'Content-Type': 'application/json'}).then((putResponse){
-
-                        });
-
-*/
-
-/*
-* */

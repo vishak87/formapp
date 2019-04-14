@@ -7,6 +7,7 @@ import 'editprojectdetails.dart';
 import 'fetchdetailsfordropdown.dart';
 import 'editDailyReports.dart';
 import 'generatereporthomepage.dart';
+import 'updatelabordetailslist.dart';
 
 
 class LabourReport extends StatefulWidget{
@@ -31,7 +32,7 @@ class _LabourReportState extends State<LabourReport>{
       appBar: AppBar(title: Text('Labour Report'),),
       body: Container(
 
-      child: FetchDetails(),
+      child: GenerateReportHomepage(),
       ),
       drawer: Drawer(
         child: ListView(
@@ -77,6 +78,25 @@ class _LabourReportState extends State<LabourReport>{
               },
             ),
             ListTile(
+              title: Text('Enter Labour Details'),
+              onTap: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FetchDetails()),
+                  );
+              },
+              ),
+            ListTile(
+              title: Text('Update Labour Details'),
+              onTap: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UpdateLaborDetailsList()),
+                  );
+              },
+              )
+
+            /*ListTile(
               title: Text('Generate report'),
               onTap: (){
                 Navigator.push(
@@ -84,16 +104,8 @@ class _LabourReportState extends State<LabourReport>{
                   MaterialPageRoute(builder: (context) => GenerateReportHomepage()),
                   );
               },
-              )
-            /*ListTile(
-              title: Text('Test Details'),
-              onTap: (){
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePageForm()),
-                );
-              },
-            )*/
+              )*/
+
 
           ],
         ),

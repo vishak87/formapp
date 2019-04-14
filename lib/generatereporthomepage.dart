@@ -4,13 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'model/reportfields.dart';
+import 'model/datereportfields.dart';
+import 'reportpageview.dart';
 
 class GenerateReportHomepage extends StatelessWidget{
 
 
 
-  Map<String,List<_DateReportField>> transformedData={};
-  Map<String,_ReportFields> siteTeamReportMa={};
+  Map<String,List<DateReportField>> transformedData={};
+  Map<String,ReportFields> siteTeamReportMa={};
   Map<String,dynamic> responseMap={};
   Map<String,dynamic> reduceMap={};
 
@@ -51,17 +54,18 @@ class GenerateReportHomepage extends StatelessWidget{
       if(dataMap!=null){
 
         dataMap.forEach((dataKey,valueMap){
-          _ReportFields _reportFields= _ReportFields(dataKey,valueMap['date'],valueMap['OtDetails'],valueMap['advanceAmount'],
+          ReportFields _reportFields= ReportFields(dataKey,valueMap['date'],valueMap['OtDetails'],valueMap['advanceAmount'],
                                                          valueMap['labourDetails'],valueMap['foodDetails'],valueMap['projectName'],valueMap['teamName'],valueMap['otherAllowance'],
-                                                         valueMap['otherAllowanceReason'],valueMap['pendingSalary']);
+                                                         valueMap['otherAllowanceReason'],valueMap['pendingSalary'],valueMap['mesthriShift']
+                                                   ,valueMap['sprayLabour']);
 
           if(transformedData.containsKey( _reportFields.teamName+'-'+_reportFields.projectName)) {
             transformedData[ _reportFields.teamName + '-' +
-                _reportFields.projectName].add(_DateReportField(_reportFields, key));
+                _reportFields.projectName].add(DateReportField(_reportFields, key));
           }
           else{
-            List<_DateReportField> lstDatereportfield=[];
-            lstDatereportfield.add(_DateReportField(_reportFields, key));
+            List<DateReportField> lstDatereportfield=[];
+            lstDatereportfield.add(DateReportField(_reportFields, key));
             transformedData[ _reportFields.teamName + '-' +
                 _reportFields.projectName]=lstDatereportfield;
 
@@ -126,15 +130,13 @@ class GenerateReportHomepage extends StatelessWidget{
     // TODO: implement build
      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-    return Scaffold(
-       appBar: AppBar(title: Text('Report Details'),),
-       body: Center(
-         child: FutureBuilder(
+    return Center(
+      child: FutureBuilder(
           future: _dailyReportData,
           builder: (context, snapshot) {
 
             if(snapshot.hasData){
-             return  Column(
+              return  Column(
                 children: <Widget>[
                   _buildDateField('From Date'),
                   _buildDateField('To Date'),
@@ -142,11 +144,15 @@ class GenerateReportHomepage extends StatelessWidget{
                     if(!todt.difference(fromdt).isNegative){
                       _reduceData(fromdt,todt);
                       _transformMap();
-                       print(transformedData) ;
+                      print(transformedData) ;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ReportPageView(transformedData)),
+                        );
                     }
 
                   },
-                  child: Text('Submit'),)
+                                 child: Text('Submit'),)
 
                 ],
                 );
@@ -162,9 +168,8 @@ class GenerateReportHomepage extends StatelessWidget{
 
 
 
-    ),
-       ),
-     );
+          ),
+      );
 
 
   }
@@ -177,26 +182,3 @@ class _DailyReportResponse{
   _DailyReportResponse(this.dailyDataMap);
 }
 
-class _ReportFields{
-
-  String fbId;
-  String date;
-  String OtDetails;
-  String advanceAmount;
-  String labourDetails;
-  String foodDetails;
-  String projectName;
-  String teamName;
-  String otherAllowance;
-  String otherAllowanceReason;
-  String pendingSalary;
-
-  _ReportFields(this.fbId,this.date,this.OtDetails,this.advanceAmount,this.labourDetails,this.foodDetails,
-                this.projectName,this.teamName,this.otherAllowance,this.otherAllowanceReason,this.pendingSalary);
-}
-
-class _DateReportField{
-  String date;
-  _ReportFields _reportFields;
-  _DateReportField(this._reportFields,this.date);
-}
